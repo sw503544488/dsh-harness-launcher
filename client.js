@@ -170,10 +170,16 @@ window.__ModuleLoader__.load({
   filter: brightness(1.06);
 }
 .hl-btn-danger { color: var(--dsw-alias-state-error-primary); border-color: var(--dsw-alias-border-l1); }
-.hl-btn-danger-armed {
+.hl-btn-danger:hover:not(:disabled) { border-color: var(--dsw-alias-state-error-primary); }
+/* The armed state owns its hover: the shared hover rule must never repaint it,
+   or white text lands on the light hover surface and the button reads as blank. */
+.hl-btn-danger-armed,
+.hl-btn-danger-armed:focus-visible,
+.hl-btn-danger-armed:hover:not(:disabled) {
   background: var(--dsw-alias-state-error-primary);
   border-color: transparent;
   color: #fff;
+  font-weight: 600;
 }
 .hl-hint {
   margin: 10px 0 0;
