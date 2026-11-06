@@ -6,6 +6,14 @@
 
 ---
 
+## 安装
+
+```powershell
+dsh plugin --profile web add github:sw503544488/dsh-harness-launcher
+```
+
+装完侧栏出现 `>_` 图标 → 点开 → **生成 / 更新桌面图标**，桌面就有 `DeepSeek Harness` 了。
+
 ## 它做什么
 
 - **侧栏入口**：左侧栏多一个 `>_` 图标，点开是状态面板。
@@ -31,23 +39,31 @@
 | `dsh` 在 PATH | 生成图标时用 `where dsh` 解析出绝对路径写进脚本，之后不依赖 PATH |
 | 安装时需要 git + pnpm | 这是通过 GitHub 安装的前置条件，不是本插件的要求 |
 
-## 安装
+## 安装方式
 
-从 GitHub 安装（把 `OWNER/REPO` 换成实际仓库）：
+**方式一：命令行**
 
 ```powershell
-dsh plugin --profile web add github:OWNER/REPO
+dsh plugin --profile web add github:sw503544488/dsh-harness-launcher
 ```
 
-或在 Web UI 的 **Plugins** 页把同一个 spec 粘进安装框：
+**方式二：Web UI**
+
+侧栏 **Plugins** 页 → 安装框粘贴同一个 spec → 安装：
 
 ```
-github:OWNER/REPO
+github:sw503544488/dsh-harness-launcher
 ```
 
 装好后侧栏会出现图标；点开面板 → **生成 / 更新桌面图标** → 桌面出现 `DeepSeek Harness`。
 
-想锁定版本可以带 tag：`github:OWNER/REPO#v0.1.0`。
+想锁定版本可以带 tag：`github:sw503544488/dsh-harness-launcher#v0.1.0`。
+
+卸载：
+
+```powershell
+dsh plugin --profile web remove dsh-harness-launcher
+```
 
 ## 使用
 
@@ -114,6 +130,10 @@ node tools/make-icon.mjs    # 重写 icon.ico（16/24/32/48）
 ## English summary
 
 A DSH Web plugin that adds one sidebar entry and one desktop shortcut for DeepSeek Harness. Double-clicking the shortcut opens the authenticated UI when the Host is running, and otherwise starts `dsh --profile web --no-open` with no console window, waits for the port, then opens the browser. The sidebar panel can create/refresh the shortcut, open the UI, and restart or close the Host (both require a second click). Windows only, MIT licensed.
+
+```powershell
+dsh plugin --profile web add github:sw503544488/dsh-harness-launcher
+```
 
 ## License
 
