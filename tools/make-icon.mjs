@@ -202,3 +202,8 @@ const images = SIZES.map((size) => {
 
 writeFileSync(join(ROOT, 'icon.ico'), buildIco(images));
 console.log(`icon.ico written: ${SIZES.join(', ')} px`);
+
+// Storefront tile: the plugin list asks for a GitHub-hosted raster, not an icon.
+mkdirSync(join(ROOT, 'assets'), { recursive: true });
+writeFileSync(join(ROOT, 'assets', 'icon-180.png'), encodePng(render(180), 180));
+console.log('assets/icon-180.png written: 180 px');
