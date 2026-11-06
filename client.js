@@ -172,7 +172,8 @@ window.__ModuleLoader__.load({
 .hl-btn-danger { color: var(--dsw-alias-state-error-primary); border-color: var(--dsw-alias-border-l1); }
 .hl-btn-danger:hover:not(:disabled) { border-color: var(--dsw-alias-state-error-primary); }
 /* The armed state owns its hover: the shared hover rule must never repaint it,
-   or white text lands on the light hover surface and the button reads as blank. */
+   and it must not inherit the 120ms background fade — white text on the still
+   light surface is the flash this rule exists to prevent. */
 .hl-btn-danger-armed,
 .hl-btn-danger-armed:focus-visible,
 .hl-btn-danger-armed:hover:not(:disabled) {
@@ -180,6 +181,7 @@ window.__ModuleLoader__.load({
   border-color: transparent;
   color: #fff;
   font-weight: 600;
+  transition: none;
 }
 .hl-hint {
   margin: 10px 0 0;
