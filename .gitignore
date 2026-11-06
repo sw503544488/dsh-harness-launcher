@@ -1,0 +1,4 @@
+node_modules/
+tools/icon-preview.png
+*.log
+.DS_Store

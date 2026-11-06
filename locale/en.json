@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Harness launcher",
+    "description": "Creates one desktop icon for DeepSeek Harness: starts it without a console window when it is stopped, reopens the running UI, and restarts or closes it from the sidebar."
+  }
+}

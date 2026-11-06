@@ -1,0 +1,8 @@
+# Bundle patch for dsh-harness-launcher.
+#
+# `dsh.bundle.patch` of the package. Installing the bundle appends this row to the
+# profile's plugin stack; the Host half registers the launcher API on the Web
+# server, and the Client half (declared by `dsh.client`) adds the sidebar entry.
+- insert:
+    - id: harness-launcher
+      name: 'dsh-harness-launcher'

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="DeepSeek Harness launcher">
+  <defs>
+    <linearGradient id="hl-tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3f86f5"/>
+      <stop offset="1" stop-color="#1d40b0"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="48" height="48" rx="9.6" fill="url(#hl-tile)"/>
+  <path d="M13 16.8 L21.6 24 L13 31.2" fill="none" stroke="#ffffff" stroke-width="4.1" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="25.4" y="28.9" width="9.6" height="4.1" rx="2.05" fill="#ffffff"/>
+</svg>
