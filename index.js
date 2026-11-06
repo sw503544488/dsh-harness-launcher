@@ -280,7 +280,6 @@ export function apply(ctx) {
   const scriptPath = join(dir, 'launcher.vbs');
   const iconPath = join(dir, 'icon.ico');
   const logPath = join(dir, 'launcher.log');
-  const connection = ctx.get('connection');
 
   let dshCommandPromise;
   const dshCommand = () => {
@@ -294,8 +293,12 @@ export function apply(ctx) {
   };
 
   const origin = () => ctx.webServer.getOrigin();
+  // Resolved per request, never cached: this plugin can apply before the
+  // connection service exists, and a cached `undefined` mints no launch token,
+  // which would hand the launcher an unauthenticated URL.
   const browserUrl = () => {
     const base = origin();
+    const connection = ctx.get('connection');
     return typeof connection?.authenticatedUrl === 'function' ? connection.authenticatedUrl(base) : base;
   };
 
