@@ -1,6 +1,6 @@
 {
   "name": "dsh-harness-launcher",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "One desktop icon for DeepSeek Harness: starts it hidden when stopped, reopens the running UI, and restarts or closes it from the sidebar.",
   "type": "module",
   "main": "index.js",

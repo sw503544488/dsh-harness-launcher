@@ -16,6 +16,11 @@ window.__ModuleLoader__.load({
     const API = '/plugins/harness-launcher/api';
     const PANEL_KEY = 'harness-launcher';
     const PANEL_ORDER = 45;
+    const SETTINGS_ORDER = 35;
+
+    // Assigned by `apply`. The sidebar entry is mounted and unmounted at runtime
+    // because whether it exists at all is a stored preference.
+    let setSidebarVisibility = () => {};
 
     const DICT = {
       en: {
@@ -44,6 +49,13 @@ window.__ModuleLoader__.load({
         'notice.close': 'Close requested. This page will disconnect.',
         'notice.failed': 'Failed: {{message}}',
         'notice.loading': 'Loading status…',
+        'pref.title': 'Sidebar entry',
+        'pref.sidebar': 'Show in the sidebar',
+        'pref.hint': 'The launcher stays reachable from Settings when the sidebar icon is hidden.',
+        'pref.on': 'Shown',
+        'pref.off': 'Hidden',
+        'pref.saved.on': 'The sidebar icon is shown again.',
+        'pref.saved.off': 'Sidebar icon hidden. Settings keeps the launcher reachable.',
       },
       zh: {
         'title': 'Harness 启动器',
@@ -71,6 +83,13 @@ window.__ModuleLoader__.load({
         'notice.close': '已发送关闭指令，当前页面即将断开。',
         'notice.failed': '失败：{{message}}',
         'notice.loading': '正在读取状态…',
+        'pref.title': '侧栏入口',
+        'pref.sidebar': '在左侧栏显示',
+        'pref.hint': '隐藏侧栏图标后，仍可以从设置进入这里。',
+        'pref.on': '显示',
+        'pref.off': '隐藏',
+        'pref.saved.on': '侧栏图标已恢复显示。',
+        'pref.saved.off': '侧栏图标已隐藏，仍可从设置进入。',
       },
     };
 
@@ -198,12 +217,45 @@ window.__ModuleLoader__.load({
   line-height: 1.6;
 }
 .hl-notice-error { color: var(--dsw-alias-state-error-primary); }
+.hl-switch {
+  appearance: none;
+  flex: 0 0 auto;
+  position: relative;
+  width: 34px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.hl-switch:disabled { opacity: 0.5; cursor: default; }
+.hl-switch-on {
+  background: var(--dsw-alias-brand-primary);
+  border-color: transparent;
+}
+.hl-switch-knob {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: var(--dsw-alias-label-secondary);
+  transition: left 120ms ease, background-color 120ms ease;
+}
+.hl-switch-on .hl-switch-knob {
+  left: 17px;
+  background: #fff;
+}
 `;
 
     /** Call the Host API and unwrap `{ ok, value }`. */
     async function request(method, options) {
       const init = {
-        method: method === 'status' || method === 'url' ? 'GET' : 'POST',
+        method: method === 'status' || method === 'url' || method === 'prefs' ? 'GET' : 'POST',
         credentials: 'same-origin',
         cache: 'no-store',
         headers: { 'x-dsh-launcher': '1' },
@@ -240,6 +292,9 @@ window.__ModuleLoader__.load({
       const [failed, setFailed] = useState(false);
       const [armed, setArmed] = useState(null);
       const armTimer = useRef(null);
+      const withPreferences = props.withPreferences === true;
+      const [showInSidebar, setShowInSidebar] = useState(true);
+      const [prefReady, setPrefReady] = useState(!withPreferences);
 
       const refresh = useCallback(async () => {
         try {
@@ -256,6 +311,41 @@ window.__ModuleLoader__.load({
           if (armTimer.current !== null) clearTimeout(armTimer.current);
         };
       }, [refresh]);
+
+      useEffect(() => {
+        if (!withPreferences) return undefined;
+        let live = true;
+        request('prefs')
+          .then((value) => {
+            if (!live) return;
+            setShowInSidebar(value.showInSidebar !== false);
+            setPrefReady(true);
+          })
+          .catch(() => {
+            if (live) setPrefReady(true);
+          });
+        return () => {
+          live = false;
+        };
+      }, [withPreferences]);
+
+      const toggleSidebar = async () => {
+        const next = !showInSidebar;
+        setShowInSidebar(next);
+        setPrefReady(false);
+        try {
+          const saved = await request('prefs', { method: 'POST', body: JSON.stringify({ showInSidebar: next }) });
+          const value = saved.showInSidebar !== false;
+          setShowInSidebar(value);
+          setSidebarVisibility(value);
+          report(t(value ? 'pref.saved.on' : 'pref.saved.off'));
+        } catch (cause) {
+          setShowInSidebar(!next);
+          report(fill(t('notice.failed'), { message: cause.message }), true);
+        } finally {
+          setPrefReady(true);
+        }
+      };
 
       const disarm = () => {
         if (armTimer.current !== null) clearTimeout(armTimer.current);
@@ -357,6 +447,33 @@ window.__ModuleLoader__.load({
             h('button', { type: 'button', className: 'hl-btn', onClick: openUi, disabled: busy !== null }, t('action.open')),
           ),
         ),
+        withPreferences
+          ? h(
+            'section',
+            { className: 'hl-card' },
+            h('div', { className: 'hl-head' }, t('pref.title')),
+            h(
+              'div',
+              { className: 'hl-row' },
+              h('span', { className: 'hl-key' }, t('pref.sidebar')),
+              h(
+                'button',
+                {
+                  type: 'button',
+                  role: 'switch',
+                  'aria-checked': showInSidebar ? 'true' : 'false',
+                  'aria-label': t('pref.sidebar'),
+                  className: `hl-switch${showInSidebar ? ' hl-switch-on' : ''}`,
+                  onClick: () => void toggleSidebar(),
+                  disabled: !prefReady || busy !== null,
+                },
+                h('span', { className: 'hl-switch-knob' }),
+              ),
+              h('span', { className: 'hl-val' }, showInSidebar ? t('pref.on') : t('pref.off')),
+            ),
+            h('p', { className: 'hl-hint' }, t('pref.hint')),
+          )
+          : null,
         h(
           'section',
           { className: 'hl-card' },
@@ -419,6 +536,10 @@ window.__ModuleLoader__.load({
       );
     }
 
+    function SettingsSection(props) {
+      return h(Panel, Object.assign({}, props, { withPreferences: true }));
+    }
+
     return {
       inject: ['slots', 'locale'],
       apply(ctx) {
@@ -427,20 +548,53 @@ window.__ModuleLoader__.load({
         }
         const t = ctx.locale.bind(NS);
 
+        // The settings page is the launcher's home; the sidebar icon is optional
+        // because the global rail is shared with every other panel.
+        ctx.effect(
+          () => ctx.slots.inject('settings.section', () => ctx.slots.register({
+            name: 'settings.section',
+            id: PANEL_KEY,
+            order: SETTINGS_ORDER,
+            label: () => t('title'),
+            locale: NS,
+          }, SettingsSection)),
+          'dsh-harness-launcher: settings section',
+        );
         ctx.effect(
           () => ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: PANEL_KEY, locale: NS }, Panel)),
           'dsh-harness-launcher: main panel',
         );
-        ctx.effect(
-          () => ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
-            name: 'sidebar.panellist',
-            id: PANEL_KEY,
-            order: PANEL_ORDER,
-            label: () => t('title'),
-            locale: NS,
-          }, SidebarIcon)),
-          'dsh-harness-launcher: sidebar entry',
-        );
+
+        let sidebar = null;
+        const showSidebar = (visible) => {
+          if (visible) {
+            sidebar ??= ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
+              name: 'sidebar.panellist',
+              id: PANEL_KEY,
+              order: PANEL_ORDER,
+              label: () => t('title'),
+              locale: NS,
+            }, SidebarIcon));
+          } else if (sidebar !== null) {
+            sidebar();
+            sidebar = null;
+          }
+        };
+        setSidebarVisibility = showSidebar;
+
+        ctx.effect(() => {
+          let live = true;
+          request('prefs')
+            .then((value) => {
+              if (live) showSidebar(value.showInSidebar !== false);
+            })
+            .catch(() => {
+              if (live) showSidebar(true);
+            });
+          return () => {
+            live = false;
+          };
+        }, 'dsh-harness-launcher: sidebar preference');
       },
     };
   },

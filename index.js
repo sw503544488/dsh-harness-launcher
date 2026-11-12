@@ -15,7 +15,7 @@
  * to survive it to start the next one.
  */
 import { execFile, spawn } from 'node:child_process';
-import { access, copyFile, mkdir, writeFile } from 'node:fs/promises';
+import { access, copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -280,6 +280,7 @@ export function apply(ctx) {
   const scriptPath = join(dir, 'launcher.vbs');
   const iconPath = join(dir, 'icon.ico');
   const logPath = join(dir, 'launcher.log');
+  const prefsPath = join(dir, 'preferences.json');
 
   let dshCommandPromise;
   const dshCommand = () => {
@@ -290,6 +291,26 @@ export function apply(ctx) {
   const desktop = () => {
     desktopPromise ??= resolveDesktop();
     return desktopPromise;
+  };
+
+  /**
+   * UI preferences live beside the launcher scripts, not in the profile config:
+   * they describe how the panel renders, and changing one must not reload the
+   * plugin (which would tear down the route a moment after the toggle).
+   */
+  const readPrefs = async () => {
+    try {
+      const stored = JSON.parse(await readFile(prefsPath, 'utf8'));
+      return { showInSidebar: stored.showInSidebar !== false };
+    } catch {
+      return { showInSidebar: true };
+    }
+  };
+  const writePrefs = async (showInSidebar) => {
+    await mkdir(dir, { recursive: true });
+    const next = { showInSidebar: showInSidebar === true };
+    await writeFile(prefsPath, `${JSON.stringify(next, null, 2)}\n`, 'utf8');
+    return next;
   };
 
   const origin = () => ctx.webServer.getOrigin();
@@ -416,6 +437,19 @@ export function apply(ctx) {
 
     try {
       switch (method) {
+        case 'prefs': {
+          if (req.method === 'GET') {
+            writeOk(res, await readPrefs());
+            return;
+          }
+          const body = await readJsonBody(req);
+          if (typeof body.showInSidebar !== 'boolean') {
+            writeError(res, { code: 'bad-request', message: 'showInSidebar must be a boolean' });
+            return;
+          }
+          writeOk(res, await writePrefs(body.showInSidebar));
+          return;
+        }
         case 'status': {
           writeOk(res, await collectStatus());
           return;
