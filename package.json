@@ -1,7 +1,15 @@
 {
   "name": "dsh-harness-launcher",
   "version": "0.2.0",
-  "description": "One desktop icon for DeepSeek Harness: starts it hidden when stopped, reopens the running UI, and restarts or closes it from the sidebar.",
+  "description": "One desktop icon for DeepSeek Harness: starts it hidden when stopped, reopens the running UI, and adds restart/close plus an optional sidebar icon to Settings.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sw503544488/dsh-harness-launcher.git"
+  },
+  "homepage": "https://github.com/sw503544488/dsh-harness-launcher#readme",
+  "bugs": {
+    "url": "https://github.com/sw503544488/dsh-harness-launcher/issues"
+  },
   "type": "module",
   "main": "index.js",
   "exports": {
